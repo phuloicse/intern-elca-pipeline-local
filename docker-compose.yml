@@ -1,0 +1,131 @@
+version: '3'
+services:
+  jenkins:
+    container_name: jenkins
+    image: jenkins/docker
+    build: 
+      context: dockerfiles
+      dockerfile: jenkins_docker.dockerfile
+    ports:
+      - 8080:8080
+    volumes:
+      - "$PWD/jenkins_data:/var/jenkins_home"
+      - /var/run/docker.sock:/var/run/docker.sock
+
+
+      # - jenkinstudy_data/jenkins_data:/var/jenkins_home
+    restart: unless-stopped
+    networks:
+      - my_net
+
+  git:
+    container_name: git-server
+    image: 'gitlab/gitlab-ce'
+    # hostname: 'gitlab.example.com'
+    ports:
+      - '8090:80'
+    volumes:
+      # - '/srv/gitlab/config:/etc/gitlab'
+      # - '/srv/gitlab/logs:/var/log/gitlab'
+      # - '/srv/gitlab/data:/var/opt/gitlab'
+
+      - "~/gitlab-data/gitlab/config:/etc/gitlab"
+      - "~/gitlab-data/gitlab/logs:/var/log/gitlab"
+      - "~/gitlab-data/gitlab/data:/var/opt/gitlab"
+
+    restart: unless-stopped
+    networks:
+      - my_net
+
+
+  watchtower:
+    container_name: watchtower
+    image: v2tec/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 15 
+    restart: unless-stopped
+    networks:
+      - my_net
+
+  web-nginx:
+    container_name: web-nginx
+    image: loi030201/web-nginx
+    # build: 
+    #   context: simple_web_nginx
+    #   dockerfile: simple_web_nginx.dockerfile
+    ports:
+      - 80:80
+    restart: unless-stopped
+    networks:
+      - my_net
+
+  # # run this command 1st: sudo sysctl -p
+
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: sonarqube
+    restart: unless-stopped
+    environment:
+      - SONARQUBE_JDBC_USERNAME=sonar
+      - SONARQUBE_JDBC_PASSWORD=123
+      - SONARQUBE_JDBC_URL=jdbc:postgresql://db:5432/sonarqube
+    ports:
+      - "9000:9000"
+      - "9092:9092"
+    volumes:
+      - sonarqube_conf:/opt/sonarqube/conf
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_bundled-plugins:/opt/sonarqube/lib/bundled-plugins
+    networks:
+      - my_net
+
+  db:
+    image: postgres:12
+    container_name: db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=123
+      - POSTGRES_DB=sonarqube
+    volumes:
+      - sonarqube_db:/var/lib/postgresql10
+      - postgresql_data:/var/lib/postgresql10/data
+    networks:
+      - my_net
+
+  # artifactory:
+  #   container_name: artifactory
+  #   image: releases-docker.jfrog.io/jfrog/artifactory-pro:latest
+  #   ports:
+  #     - 8082:8082
+  #     - 8081:8081
+  #   volumes:
+  #     - artifactory-data:/var/opt/jfrog/artifactory 
+  #   networks:
+  #     - my_net
+  #   restart: always
+
+volumes:
+  postgresql_data:
+  sonarqube_bundled-plugins:
+  sonarqube_conf:
+  sonarqube_data:
+  sonarqube_db:
+  sonarqube_extensions:
+  # artifactory-data:
+
+networks:
+  my_net:
+# volumes:
+#   jenkinstudy_data:
+
+# sonar token: c820a86a1343699b98f1ca8997b85c2fcd0035b0
+# gitlab: glpat-unXw7BKFNZRUz7SCL6JL
+#  jenkins : 112e8e99190be1b56d3cca68bb08f9e55f
+
+
+# http://storage.googleapis.com/dream-machines-output/fa55db49-7b20-4813-b6b8-185343e34e8b/0_0.png
+
+# http://storage.googleapis.com/dream-machines-output/a2Id76a4-dc99-486f-9994-def7021bd6dd/0_0.png
