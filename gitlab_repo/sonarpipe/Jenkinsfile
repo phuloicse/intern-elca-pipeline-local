@@ -1,0 +1,131 @@
+pipeline {
+    // agent any
+    // agent {
+
+    //     docker {
+
+    //         image 'maven:3-alpine'
+
+    //         args '-v /root/.m2:/root/.m2'
+
+    //     }
+    // }
+    agent any
+    tools {
+        maven 'maven'
+        // sonarqube
+    }
+
+    
+    stages {
+        stage('Java Build') {
+            // agent {
+
+            //     docker {
+
+            //         image 'maven:3-alpine'
+
+            //         args '-v /root/.m2:/root/.m2'
+
+            //     }
+            // }
+            
+            steps {
+                // sh './jenkins/scripts/mvn.sh mvn -B -DskipTests clean package'
+                sh 'mvn -B -DskipTests clean package'
+                sh 'echo " Building Java"'
+                // sh 'sleep 3'
+
+            }
+
+        }
+            
+        
+        stage('Java Test') {
+            // agent {
+
+            //     docker {
+
+            //         image 'maven:3-alpine'
+
+            //         args '-v /root/.m2:/root/.m2'
+
+            //     }
+            // }
+
+            steps {
+                // sh './jenkins/scripts/mvn.sh mvn test'
+                sh'mvn test'
+                sh 'echo "Testing Java"'
+                // sh 'sleep 3'
+            }
+
+        } 
+        // post {
+        //     success{               
+                
+        //     }
+        // }
+
+
+
+
+
+        stage('Sonarqube Test') {
+      
+
+            steps {
+        //         // sh './jenkins/scripts/mvn.sh mvn test'
+        //         // sh'mvn clean install sonar:sonar'
+        //         // sh 'sleep 3'
+        //         // withSonarQubeEnv('sonarquebe') {
+        //         // sh 'mvn clean package sonar:sonar'
+        //     // }
+                sh '''mvn sonar:sonar \
+                    -Dsonar.projectKey=simple-web \
+                    -Dsonar.host.url=http://sonarqube:9000 \
+                    -Dsonar.login=c820a86a1343699b98f1ca8997b85c2fcd0035b0'''
+                // build job: 'test-sonar'
+                
+                        //    input "Retry the job ?"
+                        //    build(job: 'test-sonar', wait: false)
+                        
+                    
+                }
+              
+            
+
+        }
+
+        stage('Update web') {
+            // agent none
+            steps {              
+                 sh './addnewline.sh $(date)'
+
+            }
+        }
+        stage('Docker build image and upload') {
+            // agent none
+            // agent any
+            steps {
+                // sh 'cd jenkins/scripts/'
+               
+                sh './updatedocker.sh'
+                // sh '''  docker login -u loi030201 -p hoi3lam2gi2
+                //         docker image build -t loi030201/web-nginx -f Dockerfile .
+                //         docker push loi030201/web-nginx '''
+            }
+           
+        }
+
+        // stage('Docker delete local')
+        // {
+        //     agent none
+        //     steps{
+        //         sh 'docker image rm loi030201/web-nginx'
+        //     }
+        // }
+
+    }
+}
+    

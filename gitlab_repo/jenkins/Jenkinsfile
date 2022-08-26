@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+    // agent {
+
+    //     docker {
+
+    //         image 'maven:3-alpine'
+
+    //         args '-v /root/.m2:/root/.m2'
+
+    //     }
+
+    // }
+
+    
+    stages {
+        stage('Update web') {
+            // agent none
+            steps {              
+                    sh './addnewline.sh $(date)'
+
+            }
+        }
+        stage('Docker build image and upload') {
+            // agent none
+            steps {
+                // sh 'cd jenkins/scripts/'
+               
+                sh './updatedocker.sh'
+                // sh '''  docker login -u loi030201 -p hoi3lam2gi2
+                //         docker image build -t loi030201/web-nginx -f Dockerfile .
+                //         docker push loi030201/web-nginx '''
+            }
+           
+        }
+
+        stage('Docker delete local')
+        {
+            agent none
+            steps{
+                sh 'docker image rm loi030201/web-nginx'
+            }
+        }
+    }
+}
+    
